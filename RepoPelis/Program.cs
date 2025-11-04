@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RepoPelis.DAL;
+using RepoPelis.Implementations;
+using RepoPelis.Interfaces;
 using RepoPelis.Model.Entities;
 using RepoPelis.Repositories.Implementations;
 using RepoPelis.Repositories.Interfaces;
@@ -15,7 +17,10 @@ namespace Server
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddScoped<IGenreService, GenreService>();
+            builder.Services.AddScoped<IMovieService, MovieService>();
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            
             builder.Services.AddControllers();
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -24,7 +29,14 @@ namespace Server
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalHost",
+                    policy => policy.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod());
+            });
+
             var app = builder.Build();
+           
 
             // Modification: Add seed an ensure migration
 
@@ -48,6 +60,7 @@ namespace Server
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AllowLocalHost");
 
             app.UseAuthorization();
 
